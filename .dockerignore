@@ -1,0 +1,17 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+__pycache__
+*.pyc
+.vscode
+.idea
+*.md
+LICENSE
+smithery.yaml
+.dockerignore
+.pytest_cache
+test_simulation.py
+smoke_openai_contract.py
+conftest.py

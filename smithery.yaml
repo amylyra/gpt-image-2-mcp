@@ -1,0 +1,36 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      openaiApiKey:
+        type: string
+        description: "OpenAI API key with gpt-image-2 access"
+      imageUrlSigningKey:
+        type: string
+        description: "HMAC key used to sign /images/{asset_id} URLs (openssl rand -hex 32)"
+      openaiImageModel:
+        type: string
+        description: "Optional model override (default: gpt-image-2; fallback: gpt-image-1.5)"
+      s3Bucket:
+        type: string
+        description: "Optional S3 bucket for durable image URLs (v0.2)"
+      gcsBucket:
+        type: string
+        description: "Optional GCS bucket for durable image URLs (v0.2)"
+    required:
+      - openaiApiKey
+      - imageUrlSigningKey
+  commandFunction: |-
+    (config) => ({
+      command: 'python',
+      args: ['server.py'],
+      env: {
+        OPENAI_API_KEY: config.openaiApiKey,
+        IMAGE_URL_SIGNING_KEY: config.imageUrlSigningKey,
+        MCP_TRANSPORT: 'stdio',
+        ...(config.openaiImageModel ? { OPENAI_IMAGE_MODEL: config.openaiImageModel } : {}),
+        ...(config.s3Bucket ? { S3_BUCKET: config.s3Bucket } : {}),
+        ...(config.gcsBucket ? { GCS_BUCKET: config.gcsBucket } : {})
+      }
+    })
