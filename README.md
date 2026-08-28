@@ -212,3 +212,9 @@ Default URL TTL (signed only): 24h (`IMAGE_URL_TTL_SECONDS`). Signature: `hmac_s
 - v1.0 ✅ — Studio UI (`/app`, `/api/{tool}`), companion skill (`mcp-gpt-image-2-companion/SKILL.md`), per-IP rate limit (`RATE_LIMIT_PER_MINUTE`) + Cloud Armor edge policy snippet in `CLAUDE.md`.
 
 See `CLAUDE.md` for operator notes and routing decisions.
+
+## Writing
+
+I write about the architecture and lessons behind systems like this:
+
+→ [Agentic Workflow Design: Six Principles for 2026](https://www.amyzyuan.com/thoughts/agentic-workflow-design-2026)
