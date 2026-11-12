@@ -92,22 +92,22 @@ This makes URL/stat fidelity structural, not prompt-engineered. If a user asks f
 
 ## Required env
 
-- `OPENAI_API_KEY` — gpt-image-2 access required.
+- `OPENAI_API_KEY` — access to the selected image model required.
 - `IMAGE_URL_SIGNING_KEY` — generate with `openssl rand -hex 32`. Server fails fast if missing.
 - `PUBLIC_URL` (Cloud Run only) — without it, signed image URLs default to localhost.
 
 ## Models
 
-- `OPENAI_IMAGE_MODEL=gpt-image-2` (default).
-- Fallback (manual): `gpt-image-1.5`. **Never** use `gpt-image-1` (deprecated).
+- `OPENAI_IMAGE_MODEL=gpt-image-2.6-sunburst` (candidate default; requires live validation).
+- Alternative (manual): `gpt-image-2.6-flare`. No automatic cross-model retries.
 - `OPENAI_REFINE_MODEL=gpt-5.5` reserved for v0.4 (`refine_image` via Responses API).
 
-## Image API contract — DO NOT pass these
+## Preserved adapter contract — DO NOT pass these
 
 - `response_format` — always base64.
 - `thinking` — Responses API param, not Images.
-- `input_fidelity` — not an Image API param.
-- `background="transparent"` — unsupported.
+- `input_fidelity` — intentionally omitted by this adapter.
+- `background="transparent"` — not exposed by this adapter.
 - `output_compression` with `output_format="png"` — invalid combo.
 
 `openai_images.validate_image_params()` rejects all of the above before the SDK call.
@@ -215,3 +215,6 @@ Update together:
 python -m pytest test_simulation.py -x -q
 python smoke_openai_contract.py --cheap   # ~$0.02–$0.05 per run
 ```
+
+
+Migration review and release gates: see `MIGRATION_REVIEW.md`. The legacy service name is not proof of the selected upstream model. Preserve the eight tool schemas and existing storage/authentication.

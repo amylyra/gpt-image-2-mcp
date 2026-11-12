@@ -1,0 +1,577 @@
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "result": {
+    "tools": [
+      {
+        "name": "upload_image",
+        "description": "Upload an image to the gpt-image-2-mcp server. Accepts an http(s) URL or (in stdio mode) a local file path. Returns an asset_id and signed image_url that any other tool will accept as input. NEVER pass base64 / data: URIs \u2014 they hang MCP transport. For pasted/local files in claude.ai web, POST to /upload to get an asset_id.",
+        "inputSchema": {
+          "properties": {
+            "image": {
+              "description": "http(s) URL, or local file path (stdio only)",
+              "title": "Image",
+              "type": "string"
+            }
+          },
+          "required": [
+            "image"
+          ],
+          "title": "upload_imageArguments",
+          "type": "object"
+        }
+      },
+      {
+        "name": "generate_image",
+        "description": "Text-to-image with gpt-image-2 \u2014 strong on text, infographics, multi-reference compositing, identity-preserving edits. For artistic / photoreal raw assets prefer Nano Banana. n>1 returns variants (NOT a coherent set). PNG default. INTAKE REQUIRED: confirm aspect_ratio AND quality with the user before calling, unless they already named both.",
+        "inputSchema": {
+          "properties": {
+            "prompt": {
+              "maxLength": 4000,
+              "minLength": 1,
+              "title": "Prompt",
+              "type": "string"
+            },
+            "aspect_ratio": {
+              "default": "1:1",
+              "description": "Confirm with user. 1:1, 4:5, 5:4, 16:9, 9:16, 3:2, 2:3, social-*, infographic-*.",
+              "title": "Aspect Ratio",
+              "type": "string"
+            },
+            "quality": {
+              "default": "medium",
+              "description": "Confirm with user. low | medium (default) | high (4K, costs more).",
+              "title": "Quality",
+              "type": "string"
+            },
+            "count": {
+              "default": 1,
+              "maximum": 4,
+              "minimum": 1,
+              "title": "Count",
+              "type": "integer"
+            },
+            "output_format": {
+              "default": "png",
+              "description": "png | jpeg | webp",
+              "title": "Output Format",
+              "type": "string"
+            },
+            "moderation": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "auto | low (rarely needed)",
+              "title": "Moderation"
+            },
+            "save_folder": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Local folder to also save into",
+              "title": "Save Folder"
+            }
+          },
+          "required": [
+            "prompt"
+          ],
+          "title": "generate_imageArguments",
+          "type": "object"
+        }
+      },
+      {
+        "name": "edit_image",
+        "description": "Edit an image with gpt-image-2. Up to 16 source images, optional mask. Sources may be http(s) URLs OR asset_ids. Output shape DEFAULTS to the first source's closest aspect alias \u2014 no intake needed unless the user explicitly asks to reshape. Masks guide where edits should occur \u2014 they don't enforce pixel-precise selection. Mask must be PNG, same size as base, with alpha (black/white-only PNGs are auto-converted).",
+        "inputSchema": {
+          "properties": {
+            "prompt": {
+              "maxLength": 4000,
+              "minLength": 1,
+              "title": "Prompt",
+              "type": "string"
+            },
+            "image": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              ],
+              "description": "URL or asset_id, or list of up to 16",
+              "title": "Image"
+            },
+            "mask": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "URL or asset_id of a mask PNG, optional",
+              "title": "Mask"
+            },
+            "aspect_ratio": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Optional. Defaults to the closest alias for the first source image's shape \u2014 pass to override.",
+              "title": "Aspect Ratio"
+            },
+            "quality": {
+              "default": "medium",
+              "title": "Quality",
+              "type": "string"
+            },
+            "count": {
+              "default": 1,
+              "maximum": 4,
+              "minimum": 1,
+              "title": "Count",
+              "type": "integer"
+            },
+            "output_format": {
+              "default": "png",
+              "title": "Output Format",
+              "type": "string"
+            },
+            "save_folder": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Save Folder"
+            }
+          },
+          "required": [
+            "prompt",
+            "image"
+          ],
+          "title": "edit_imageArguments",
+          "type": "object"
+        }
+      },
+      {
+        "name": "refine_image",
+        "description": "Iteratively refine an image via the Responses API (multi-turn). Use for follow-up edits like 'make the background darker', 'tighten the left margin', 'shift the subject up'. Chain across turns by passing previous_response_id from the prior call \u2014 preserves model context without re-uploading. tool_choice is always forced to image_generation; you cannot accidentally get a text-only reply. First turn: pass image=URL/asset_id. Subsequent turns: pass previous_response_id.",
+        "inputSchema": {
+          "properties": {
+            "prompt": {
+              "description": "What to change. Be specific \u2014 'darken background by 20%', not 'make it cooler'.",
+              "maxLength": 4000,
+              "minLength": 1,
+              "title": "Prompt",
+              "type": "string"
+            },
+            "image": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "URL or asset_id of the source image. Required on first turn; ignored if previous_response_id is set.",
+              "title": "Image"
+            },
+            "previous_response_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "response_id from the prior refine_image call (multi-turn chaining).",
+              "title": "Previous Response Id"
+            },
+            "image_generation_call_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "image_generation_call.id from a prior turn \u2014 alternative chaining mode.",
+              "title": "Image Generation Call Id"
+            },
+            "reasoning_effort": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "low|medium|high \u2014 defaults to OPENAI_REFINE_REASONING_EFFORT (low).",
+              "title": "Reasoning Effort"
+            },
+            "save_folder": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Save Folder"
+            }
+          },
+          "required": [
+            "prompt"
+          ],
+          "title": "refine_imageArguments",
+          "type": "object"
+        }
+      },
+      {
+        "name": "create_infographic",
+        "description": "Generate an infographic with EXACT text. Hybrid pipeline: (1) gpt-image-2 generates the BACKGROUND only \u2014 no text in the image; (2) the title / subtitle / stat / bullets / footer you provide are rendered deterministically via Pillow on top of the background. URL accuracy and stat accuracy are guaranteed \u2014 the model never sees them. Layouts: portrait-stat (big stat + label), landscape-comparison (title + two columns), square-list (title + bullets). Slot names depend on the layout \u2014 see content schema in the docs. background_prompt should describe the visual style of the background only. INTAKE REQUIRED: confirm layout AND quality with the user before calling. Layout implies aspect (portrait-stat=2:3, landscape-comparison=3:2, square-list=1:1) but quality (low/medium/high) is the user's call.",
+        "inputSchema": {
+          "properties": {
+            "background_prompt": {
+              "description": "Visual style for the background \u2014 do not include text content here.",
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Background Prompt",
+              "type": "string"
+            },
+            "layout": {
+              "default": "square-list",
+              "description": "portrait-stat | landscape-comparison | square-list",
+              "title": "Layout",
+              "type": "string"
+            },
+            "content": {
+              "additionalProperties": true,
+              "description": "Slot text. Keys depend on layout: portrait-stat \u2192 {stat, subtitle, footer}; landscape-comparison \u2192 {title, left (str|list), right (str|list)}; square-list \u2192 {title, subtitle, bullets (list[str]), footer}.",
+              "title": "Content",
+              "type": "object"
+            },
+            "quality": {
+              "default": "medium",
+              "title": "Quality",
+              "type": "string"
+            },
+            "color": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Text color override (hex or named).",
+              "title": "Color"
+            },
+            "save_folder": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Save Folder"
+            }
+          },
+          "required": [
+            "background_prompt",
+            "content"
+          ],
+          "title": "create_infographicArguments",
+          "type": "object"
+        }
+      },
+      {
+        "name": "composite_images",
+        "description": "Combine 2\u201316 source images into one new image with gpt-image-2. Use for: product-on-background, side-by-side layouts, character-into-scene, multi-reference identity-preserving compositions. Sources may be URLs or asset_ids in any mix. Distinct from edit_image: framed as 'create a new image from these inputs', not 'modify this image'. The prompt should describe the desired final scene. INTAKE REQUIRED: confirm aspect_ratio AND quality with the user before calling \u2014 composite produces a NEW image, not source-shaped.",
+        "inputSchema": {
+          "properties": {
+            "prompt": {
+              "description": "What the final scene should look like. Reference inputs by index (e.g. 'place subject from image 1 onto background from image 2').",
+              "maxLength": 4000,
+              "minLength": 1,
+              "title": "Prompt",
+              "type": "string"
+            },
+            "images": {
+              "description": "2\u201316 source images (URL or asset_id).",
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 16,
+              "minItems": 2,
+              "title": "Images",
+              "type": "array"
+            },
+            "aspect_ratio": {
+              "default": "1:1",
+              "description": "Confirm with user. 1:1, 4:5, 16:9, 9:16, 3:2, 2:3, etc.",
+              "title": "Aspect Ratio",
+              "type": "string"
+            },
+            "quality": {
+              "default": "medium",
+              "description": "Confirm with user. low | medium (default) | high (4K, costs more).",
+              "title": "Quality",
+              "type": "string"
+            },
+            "count": {
+              "default": 1,
+              "maximum": 4,
+              "minimum": 1,
+              "title": "Count",
+              "type": "integer"
+            },
+            "output_format": {
+              "default": "png",
+              "title": "Output Format",
+              "type": "string"
+            },
+            "save_folder": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Save Folder"
+            }
+          },
+          "required": [
+            "prompt",
+            "images"
+          ],
+          "title": "composite_imagesArguments",
+          "type": "object"
+        }
+      },
+      {
+        "name": "add_text_overlay",
+        "description": "Add a text overlay to an existing image. DETERMINISTIC by default \u2014 renders via Pillow with zero API cost and exact text (no AI). Pass render_mode='ai_integrated' only when you need the text physically integrated into the scene (e.g., on a sign within the image); the AI path may not be character-perfect. position is a preset name OR pass an explicit bbox={x,y,w,h} in [0,1].",
+        "inputSchema": {
+          "properties": {
+            "image": {
+              "description": "URL or asset_id",
+              "title": "Image",
+              "type": "string"
+            },
+            "text": {
+              "maxLength": 400,
+              "minLength": 1,
+              "title": "Text",
+              "type": "string"
+            },
+            "position": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "top|bottom|center|top-left|... (or pass bbox)",
+              "title": "Position"
+            },
+            "bbox": {
+              "anyOf": [
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "{x,y,w,h} in [0,1]; overrides position",
+              "title": "Bbox"
+            },
+            "style": {
+              "default": "headline",
+              "description": "headline|badge|caption|watermark",
+              "title": "Style",
+              "type": "string"
+            },
+            "color": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "hex like #ffffff or named",
+              "title": "Color"
+            },
+            "render_mode": {
+              "default": "deterministic",
+              "description": "deterministic|ai_integrated",
+              "title": "Render Mode",
+              "type": "string"
+            },
+            "save_folder": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Save Folder"
+            }
+          },
+          "required": [
+            "image",
+            "text"
+          ],
+          "title": "add_text_overlayArguments",
+          "type": "object"
+        }
+      },
+      {
+        "name": "add_link_cta",
+        "description": "Add a CTA + URL to an image. DETERMINISTIC by default \u2014 URL accuracy is critical, so the URL string is rendered character-for-character via Pillow with zero API cost. Use render_mode='ai_integrated' only for stylized in-scene CTAs where exact URL fidelity is not required (rarely the case).",
+        "inputSchema": {
+          "properties": {
+            "image": {
+              "description": "URL or asset_id",
+              "title": "Image",
+              "type": "string"
+            },
+            "cta_text": {
+              "default": "",
+              "description": "e.g. 'Shop Now'. Empty string for URL-only.",
+              "maxLength": 80,
+              "title": "Cta Text",
+              "type": "string"
+            },
+            "url_text": {
+              "description": "EXACT URL text \u2014 every character must match.",
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Url Text",
+              "type": "string"
+            },
+            "position": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "bottom-center",
+              "title": "Position"
+            },
+            "bbox": {
+              "anyOf": [
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Bbox"
+            },
+            "style": {
+              "default": "button",
+              "description": "button|bar|pill|underlined-link",
+              "title": "Style",
+              "type": "string"
+            },
+            "color_scheme": {
+              "default": "white-on-coral",
+              "description": "white-on-coral|coral-on-white|white-on-black|...",
+              "title": "Color Scheme",
+              "type": "string"
+            },
+            "render_mode": {
+              "default": "deterministic",
+              "description": "deterministic|ai_integrated",
+              "title": "Render Mode",
+              "type": "string"
+            },
+            "save_folder": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Save Folder"
+            }
+          },
+          "required": [
+            "image",
+            "url_text"
+          ],
+          "title": "add_link_ctaArguments",
+          "type": "object"
+        }
+      }
+    ]
+  }
+}
