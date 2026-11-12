@@ -203,6 +203,9 @@ Drive URL.
 
 def build_server() -> FastMCP:
     _check_required_env()
+    from openai_images import DEFAULT_MODEL
+    # Model ID only: makes configuration overrides visible without logging secrets.
+    log(f"[gpt-image-2-mcp] image_model={DEFAULT_MODEL}\n")
     mcp = FastMCP(
         name="gpt-image-2-mcp",
         instructions=_instructions_template(),
@@ -227,3 +230,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

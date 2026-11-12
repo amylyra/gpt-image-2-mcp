@@ -1,6 +1,6 @@
 # gpt-image-2-mcp
 
-MCP server for OpenAI's **gpt-image-2** (released 2026-04-21), focused on **post-edit work**: text overlays, link/CTA additions, brand-consistent infographics, identity-preserving edits.
+MCP server for OpenAI image models (legacy service name: **gpt-image-2**), focused on **post-edit work**: text overlays, link/CTA additions, brand-consistent infographics, identity-preserving edits.
 
 Companion to [`nanobanana-mcp`](../nanobanana-mcp). Both servers coexist — route by tool description: gpt-image-2 for text-heavy / infographic / multi-reference / identity-preserving work, Nano Banana for raw artistic / photoreal generation.
 
@@ -45,7 +45,7 @@ When the user replies *save* / *save to drive*, the agent fetches bytes from the
 
 ## Why deterministic by default
 
-gpt-image-2 is the strongest text-rendering image model available, but still imperfect. For URL/CTA copy where `proven.com/spring` MUST NOT become `proven.com/sprlng`, the deterministic Pillow path renders text exactly and costs $0 per call. Use `render_mode="ai_integrated"` only when you need the text physically integrated into the scene (sign in the image, label on a product, etc.) and exact fidelity isn't required.
+Generative image text is imperfect. For URL/CTA copy where `proven.com/spring` MUST NOT become `proven.com/sprlng`, the deterministic Pillow path renders text exactly and costs $0 per call. Use `render_mode="ai_integrated"` only when you need the text physically integrated into the scene (sign in the image, label on a product, etc.) and exact fidelity isn't required.
 
 For full infographics, `create_infographic` extends the same idea: gpt-image-2 generates the background (no text), and the title / bullets / stat / footer are rendered via Pillow afterwards. The model literally never sees the user's text content — exact fidelity is structurally guaranteed.
 
@@ -127,14 +127,14 @@ Set `PUBLIC_URL` — without it, signed image URLs use localhost and break in pr
 
 ---
 
-## What's NOT supported (gpt-image-2 contract)
+## Preserved adapter contract
 
 The adapter rejects these before the SDK call:
 
 - `response_format` — gpt-image-2 always returns base64.
 - `thinking` — not an Image API parameter.
-- `input_fidelity` — not an Image API parameter.
-- `background="transparent"` — not supported.
+- `input_fidelity` — intentionally omitted by this adapter.
+- `background="transparent"` — not exposed by this adapter.
 - `output_compression` with `output_format="png"` — only valid for jpeg/webp.
 
 If a tool ever tries to pass any of these, you get a `ValueError` before a single token is spent.
@@ -218,3 +218,8 @@ See `CLAUDE.md` for operator notes and routing decisions.
 I write about the architecture and lessons behind systems like this:
 
 → [Agentic Workflow Design: Six Principles for 2026](https://www.amyzyuan.com/thoughts/agentic-workflow-design-2026)
+
+
+## Image model migration (prepared, not deployed)
+
+The candidate default is `gpt-image-2.6-sunburst`; use the existing `OPENAI_IMAGE_MODEL` override to select `gpt-image-2.6-flare` manually. An existing deployment override takes precedence over the new default, so a source update alone may not migrate production. Keep the Cloud Run service, `/mcp`, tool names, storage, and credentials. See [migration evidence and release gates](MIGRATION_REVIEW.md) before any deployment. `3:4` is now an explicit adapter alias (1152×1536; high 1536×2048).

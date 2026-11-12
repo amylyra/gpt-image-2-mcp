@@ -5,13 +5,13 @@ startCommand:
     properties:
       openaiApiKey:
         type: string
-        description: "OpenAI API key with gpt-image-2 access"
+        description: "OpenAI API key with access to the selected image model"
       imageUrlSigningKey:
         type: string
         description: "HMAC key used to sign /images/{asset_id} URLs (openssl rand -hex 32)"
       openaiImageModel:
         type: string
-        description: "Optional model override (default: gpt-image-2; fallback: gpt-image-1.5)"
+        description: "Optional model override (candidate default: gpt-image-2.6-sunburst; manual alternative: gpt-image-2.6-flare)"
       s3Bucket:
         type: string
         description: "Optional S3 bucket for durable image URLs (v0.2)"
@@ -34,3 +34,4 @@ startCommand:
         ...(config.gcsBucket ? { GCS_BUCKET: config.gcsBucket } : {})
       }
     })
+

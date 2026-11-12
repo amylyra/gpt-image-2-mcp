@@ -11,7 +11,8 @@ Sole entry point for `client.images.generate` and `client.images.edit`. Centrali
       * output_compression with output_format="png"
   - usage and bytes extraction
 
-Models: gpt-image-2 (default). Fallback gpt-image-1.5 (NOT deprecated gpt-image-1).
+Models: gpt-image-2.6-sunburst (candidate default). Manual alternative:
+gpt-image-2.6-flare. The public MCP service/tool names remain stable.
 """
 
 from __future__ import annotations
@@ -28,8 +29,9 @@ from openai import OpenAI
 # ---------------------------------------------------------------------------
 # Models
 # ---------------------------------------------------------------------------
-DEFAULT_MODEL = os.environ.get("OPENAI_IMAGE_MODEL", "gpt-image-2")
-FALLBACK_MODEL = "gpt-image-1.5"
+DEFAULT_MODEL = os.environ.get("OPENAI_IMAGE_MODEL", "gpt-image-2.6-sunburst")
+# Manual alternative only; never silently retry a paid call on another model.
+FALLBACK_MODEL = "gpt-image-2.6-flare"
 
 # ---------------------------------------------------------------------------
 # Aspect-ratio shim — preserves true ratio across default/high tiers.
@@ -40,6 +42,7 @@ ASPECT_SIZES = {
     # alias            default size      high size
     "1:1":               ("1024x1024",  "2048x2048"),
     "4:5":               ("1024x1280",  "1536x1920"),
+    "3:4":               ("1152x1536",  "1536x2048"),
     "5:4":               ("1280x1024",  "1920x1536"),
     "16:9":              ("2048x1152",  "3840x2160"),
     "9:16":              ("1152x2048",  "2160x3840"),
@@ -291,3 +294,4 @@ def extract_usage(response: Any) -> dict:
         if v is not None:
             out[attr] = v if not hasattr(v, "model_dump") else v.model_dump()
     return out
+
