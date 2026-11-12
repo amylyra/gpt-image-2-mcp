@@ -60,3 +60,16 @@ The separate `refine_image` Responses path keeps its existing mainline model and
 tool selection. This review does not establish its effective image backend or
 2.6 compatibility. Quality-dependent token counts can change, so existing rough
 cost estimates are not a migration spending guarantee.
+
+## Second review
+
+The migration tests originally assumed the caller's working directory was the
+repository root. They now resolve the captured schema relative to this file and
+run the model-override subprocess in the repository directory. An autouse fixture
+also isolates local storage from inherited PUBLIC_URL/S3/GCS settings. All 21
+migration checks passed both from a parent directory and with explicit inherited
+cloud-storage settings; all calls remain mocked and no cloud writes occur.
+
+This repository has no GitHub Actions test workflow. Passing test evidence here
+is local execution, not a green hosted CI result. The draft remains gated on the
+deployment and live-render validation above.

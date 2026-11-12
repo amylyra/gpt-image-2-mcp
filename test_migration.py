@@ -30,6 +30,15 @@ import storage
 from tools import unpack_tool_result
 
 MODELS = ["gpt-image-2.6-sunburst", "gpt-image-2.6-flare"]
+REPO_ROOT = Path(__file__).resolve().parent
+
+
+@pytest.fixture(autouse=True)
+def isolated_local_storage(monkeypatch):
+    # A developer's PUBLIC_URL/cloud configuration must not affect offline tests.
+    monkeypatch.setattr(storage, "_BASE_URL", "http://localhost:8080")
+    monkeypatch.setattr(storage, "S3_BUCKET", "")
+    monkeypatch.setattr(storage, "GCS_BUCKET", "")
 
 
 def png(index=0, size=(256, 256)):
@@ -52,13 +61,13 @@ def test_existing_environment_override_wins(configured, expected):
         env["OPENAI_IMAGE_MODEL"] = configured
     result = subprocess.check_output([sys.executable, "-c",
                                       "import openai_images; print(openai_images.DEFAULT_MODEL)"],
-                                     env=env, text=True).strip()
+                                     env=env, cwd=REPO_ROOT, text=True).strip()
     assert result == expected
 
 
 @pytest.mark.asyncio
 async def test_live_mcp_input_contract_preserved():
-    captured = json.loads(Path("fixtures/mcp-tools-2026-11-12.json").read_text())
+    captured = json.loads((REPO_ROOT / "fixtures/mcp-tools-2026-11-12.json").read_text())
     live = {t["name"]: t["inputSchema"] for t in captured["result"]["tools"]}
     current = {t.name: t.inputSchema for t in await server.build_server().list_tools()}
     assert current == live
@@ -79,8 +88,6 @@ CASES = [
 @pytest.mark.parametrize("model", MODELS)
 @pytest.mark.parametrize("case,ref_count,ratio,quality,count", CASES)
 async def test_brand_edit_plumbing(monkeypatch, model, case, ref_count, ratio, quality, count):
-    monkeypatch.setattr(storage, "S3_BUCKET", "")
-    monkeypatch.setattr(storage, "GCS_BUCKET", "")
     monkeypatch.setattr(adapter, "DEFAULT_MODEL", model)
     inputs = [png(i) for i in range(ref_count)]
     ids = [storage.store_asset(b, "image/png") for b in inputs]
